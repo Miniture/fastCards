@@ -9,9 +9,65 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: us-east-2
+      TF_VAR_aws_region: us-east-2
+      TF_VAR_project_name: fastcards
+      TF_VAR_instance_type: t3.micro
+      TF_VAR_my_ip_cidr: ${{ secrets.MY_IP_CIDR }}
+      TF_VAR_public_key: ${{ secrets.EC2_PUBLIC_KEY }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Say hello
-        run: echo CD workflow is running
+      # 🔐 AWS LOGIN (simple version using access keys)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 🏗 Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform plan
+        working-directory: terraform
+        run: terraform plan -out=tfplan
+
+      - name: Terraform apply
+        working-directory: terraform
+        run: terraform apply -auto-approve tfplan
+
+      # 🔑 Setup SSH key for Ansible
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/keyFastCardsServer.pem
+          chmod 600 ~/.ssh/keyFastCardsServer.pem
+
+      # 🐍 Install Ansible
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible boto3 botocore
+          ansible-galaxy collection install amazon.aws
+
+      # ⚙️ Run Ansible
+      - name: Run Ansible playbook
+        working-directory: ansible
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+        run: ansible-playbook playbooks/site.yml
+        # trigger run for test
