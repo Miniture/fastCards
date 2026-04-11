@@ -19,23 +19,25 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      # 🔐 AWS LOGIN (simple version using access keys)
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 🏗 Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform init
         working-directory: terraform
         run: terraform init
+
+      - name: Terraform validate
+        working-directory: terraform
+        run: terraform validate
 
       - name: Terraform plan
         working-directory: terraform
@@ -45,14 +47,12 @@ jobs:
         working-directory: terraform
         run: terraform apply -auto-approve tfplan
 
-      # 🔑 Setup SSH key for Ansible
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/keyFastCardsServer.pem
           chmod 600 ~/.ssh/keyFastCardsServer.pem
 
-      # 🐍 Install Ansible
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -64,10 +64,8 @@ jobs:
           pip install ansible boto3 botocore
           ansible-galaxy collection install amazon.aws
 
-      # ⚙️ Run Ansible
       - name: Run Ansible playbook
         working-directory: ansible
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
         run: ansible-playbook playbooks/site.yml
-        # trigger run for test
