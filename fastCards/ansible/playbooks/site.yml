@@ -1,0 +1,25 @@
+---
+- name: Configure app server
+  hosts: role_app
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - python3
+          - python3-pip
+          - docker.io
+          - git
+        state: present
+
+    - name: Ensure Docker is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
