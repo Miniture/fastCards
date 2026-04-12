@@ -69,4 +69,4 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
         run: ansible-playbook playbooks/site.yml
-        # demo!
+        # demo!v2
