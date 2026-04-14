@@ -33,6 +33,13 @@
         state: absent
       ignore_errors: true
 
+    - name: Fix n8n data directory permissions
+      ansible.builtin.file:
+      path: /opt/n8n_data
+      owner: 1000
+      group: 1000
+      recurse: yes
+
     - name: Run n8n container
       community.docker.docker_container:
         name: n8n
@@ -47,3 +54,5 @@
           N8N_HOST: "0.0.0.0"
           N8N_PORT: "5678"
           N8N_PROTOCOL: "http"
+      
+      
