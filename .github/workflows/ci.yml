@@ -42,4 +42,4 @@ jobs:
 
       - name: Ansible syntax check
         working-directory: ansible
-        run: ansible-playbook playbooks/site.yml --syntax-check
+        run: ansible-playbook -i localhost, playbooks/site.yml --syntax-check
