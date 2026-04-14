@@ -1,5 +1,5 @@
 ---
-- name: Configure app server
+- name: Configure n8n server
   hosts: role_app
   become: true
 
@@ -9,13 +9,10 @@
         update_cache: true
         cache_valid_time: 3600
 
-    - name: Install packages
+    - name: Install Docker
       ansible.builtin.apt:
         name:
-          - python3
-          - python3-pip
           - docker.io
-          - git
         state: present
 
     - name: Ensure Docker is running
@@ -23,3 +20,30 @@
         name: docker
         state: started
         enabled: true
+
+    - name: Create n8n data directory
+      ansible.builtin.file:
+        path: /opt/n8n_data
+        state: directory
+        mode: '0755'
+
+    - name: Remove old n8n container if present
+      community.docker.docker_container:
+        name: n8n
+        state: absent
+      ignore_errors: true
+
+    - name: Run n8n container
+      community.docker.docker_container:
+        name: n8n
+        image: docker.n8n.io/n8nio/n8n
+        state: started
+        restart_policy: always
+        published_ports:
+          - "5678:5678"
+        volumes:
+          - /opt/n8n_data:/home/node/.n8n
+        env:
+          N8N_HOST: "0.0.0.0"
+          N8N_PORT: "5678"
+          N8N_PROTOCOL: "http"

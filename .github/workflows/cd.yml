@@ -63,6 +63,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install ansible boto3 botocore
           ansible-galaxy collection install amazon.aws
+          ansible-galaxy collection install community.docker
 
       - name: Run Ansible playbook
         working-directory: ansible
