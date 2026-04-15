@@ -51,9 +51,10 @@
         volumes:
           - /opt/n8n_data:/home/node/.n8n
         env:
-          N8N_HOST: "18.223.3.205"
+          N8N_HOST: "3.15.28.174"
           N8N_PORT: "5678"
           N8N_PROTOCOL: "http"
           N8N_SECURE_COOKIE: "false"
+          WEBHOOK_URL: "http://3.15.28.174:5678"
       
       
